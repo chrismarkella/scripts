@@ -1,8 +1,10 @@
 import random
+import numpy as np
 
 from collections import deque
-from time import perf_counter_ns
-from typing import Union, List, Deque, Tuple
+from time        import perf_counter_ns
+from typing      import Union, List, Deque, Tuple, Any
+from datascience import *
 
 def performance(data_structure: Union[List[str], Deque[str]], N: int) -> Tuple[int, int]:
   """
@@ -50,23 +52,65 @@ def output(append_time: int, pop_time: int, data_structure: Union[List[str], Deq
   print('append time: %.2f seconds' %(append_time / 10**9))
   print('pop    time: %.2f seconds' %(pop_time / 10**9))
 
-def test(data_structures: List[Union[List[str], Deque[str]]], sample_sizes: List[int]) -> None:
+def type_name(variable: Any) -> str:
+  """
+  Return the type of the variable.
+  
+  Example:
+  -------
+  >>> lst = [1, 2, 3]
+  >>> type(lst)
+  <class 'list'>
+  >>> type_name(lst)
+  'list'
+  >>> n = 5
+  >>> type(n)
+  <class 'int'>
+  >>> type_name(n)
+  'int'
+
+  """
+  return str(type(variable)).split("'")[1]
+
+def test(data_structures: List[Union[List[str], Deque[str]]], sample_sizes: List[int]) -> Table:
+  """
+  Return the test results in a Table.
+  """
+  append_times, pop_times = [], []
+  data_structure_labels = []
+  elements = []
+
   for N in sample_sizes:
     print('%d elements' %(N))
     print('-' * 20)
-    for data_structure in data_structures:
-      append_time, pop_time = performance(data_structure, N)
-      output(append_time, pop_time, data_structure)
+    for ds in data_structures:
+      append_time, pop_time = performance(ds, N)
+      output(append_time, pop_time, ds)
+      
+      append_times.append(append_time)
+      pop_times.append(pop_time)
+      data_structure_labels.append(type_name(ds))
+      elements.append(N)
       print()
     print()
-    print()
+    # print()
+
+  table = Table().with_columns(
+    'Data structure',    data_structure_labels,
+    'Elements',          elements,
+    'Append time(nano sec)', append_times,
+    'Pop time(nano sec)',    pop_times
+  )
+  return table
 
 def main():
-  sample_sizes = [10**6, 2*10**6, 3*10**6]
+  sample_sizes = [10**5, 2*10**5]
   lst: List[str] = []
   my_stack: Deque[str] = deque()
 
-  test([lst, my_stack], sample_sizes)
+  table = test([lst, my_stack], sample_sizes)
+  table.set_format([1, 2, 3], NumberFormatter)
+  print(table)
 
 if __name__ == '__main__':
   main()
